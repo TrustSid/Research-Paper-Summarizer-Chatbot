@@ -57,25 +57,31 @@ def generate_summary(text):
 
 @app.route('/ask', methods=['POST'])
 def ask_question():
-    data = request.get_json()
-    question = data.get('question')
-    context = data.get('context',"")
-    prompt = f"Context: {context}\n\nQuestion: {question}\n\nAnswer:"
-    message = client.messages.create(
-        model="claude-3-opus-20240229",
-        max_tokens=1024,
-        system="Respond in technical English language",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
-    answer = message.result["output"]
-    return jsonify({'answer': answer})
+    try:
+        data = request.get_json()
+        question = data.get('question')
+        context = data.get('context', "")
+        prompt = f"Context: {context}\n\nQuestion: {question}\n\nAnswer:"
+        message = client.messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=1024,
+            system="Respond in technical English language",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        answer = message.content[0].text
+        return jsonify({'answer': answer})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
     app.run(debug=True)
+
+
+    
 
 
     
