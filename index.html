@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Chatbot</title>
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #chat-container {
+      width: 500px;
+      height: 80vh;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    #chat-header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-size: 20px;
+    }
+    #chat {
+      padding: 10px;
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    .bot-message {
+      background-color: #e1f5fe;
+      color: #0277bd;
+      align-self: flex-start;
+    }
+    .user-message {
+      background-color: #c8e6c9;
+      color: #388e3c;
+      align-self: flex-end;
+      text-align: right;
+      margin-left: auto;
+    }
+    #input-container {
+      display: none; /* Initially hidden */
+      border-top: 1px solid #ddd;
+      padding: 10px;
+    }
+    #input-container input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      margin-right: 10px;
+    }
+    #input-container button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color 0.3s;
+    }
+    #input-container button.disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    #uploadBtn {
+      margin: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px;
+      width: calc(100% - 20px);
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .icon-btn {
+      display: none; /* Initially hidden */
+      margin: 10px auto;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: transparent;
+    }
+    .icon-btn svg {
+      width: 24px;
+      height: 24px;
+    }
+    #pauseBtn {
+      background-color: #f44336;
+      color: white;
+    }
+    #regenerateBtn {
+      background-color: #FFEB3B;
+      color: #4CAF50;
+    }
+    #loading {
+      display: none;
+      text-align: center;
+      margin: 20px;
+    }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin: 0 2px;
+      background-color: #4CAF50;
+      border-radius: 50%;
+      animation: dot 1s infinite ease-in-out both;
+    }
+    .dot1 {
+      animation-delay: -0.32s;
+    }
+    .dot2 {
+      animation-delay: -0.16s;
+    }
+    @keyframes dot {
+      0%, 80%, 100% {
+        transform: scale(0);
+      }
+      40% {
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="chat-header">Document Summarizer</div>
+    <div id="chat"></div>
+    <div id="loading">
+      <span class="dot dot1"></span>
+      <span class="dot dot2"></span>
+      <span class="dot dot3"></span>
+    </div>
+    <div id="input-container">
+      <input type="text" id="questionInput" placeholder="Ask a question" />
+      <button id="askBtn" class="disabled" disabled>Ask</button>
+    </div>
+    <button id="uploadBtn" onclick="openFileDialog()">Upload Research Paper</button>
+    <button id="pauseBtn" class="icon-btn" onclick="pauseResponse()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path fill="white" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+      </svg>
+    </button>
+    <button id="regenerateBtn" class="icon-btn" onclick="regenerateResponse()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill="#4CAF50" d="M12 2a10 10 0 0 0-9 5.92A1 1 0 0 0 4 9h2a1 1 0 0 0 1-1c0-.38-.05-.75-.14-1.11A7.96 7.96 0 0 1 12 4a8 8 0 1 1-6.21 3H4a1 1 0 0 0-.78 1.63A10 10 0 1 0 12 2z"/>
+      </svg>
+  </button>
+    <input type="file" id="fileInput" style="display:none;" onchange="uploadFile(this.files[0])" />
+  </div>
+  <script>
+    let isPaused = false;
+    let currentSummary = '';
+    let currentIndex = 0;
+
+    function uploadFile(file) {
+      console.log('File selected:', file); // Debug log
+      let formData = new FormData();
+      formData.append('file', file);
+
+      // Show loading animation
+      document.getElementById('loading').style.display = 'block';
+
+      const chatDiv = document.getElementById('chat');
+
+      // Display user message with file icon and name
+      const userMessage = document.createElement('p');
+      userMessage.className = 'message user-message';
+      const fileName = file.name;
+      userMessage.innerHTML = `<img src="/static/pdf-icon.png" alt="File Icon" style="width: 17px; height: 17px; margin-right: 5px;"><strong>${fileName}</strong>`;
+      chatDiv.appendChild(userMessage);
+      chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to bottom
+
+      fetch('/summarize', {
+        method: 'POST',
+        body: formData
+      }).then(response => response.json())
+        .then(data => {
+          console.log('Server response:', data); // Debug log
+          if (data.summary) {
+            currentSummary = data.summary;
+            currentIndex = 0;
+            displaySummary();
+          } else if (data.error) {
+            const p = document.createElement('p');
+            p.className = 'message bot-message';
+            p.textContent = 'Error: ' + data.error;
+            chatDiv.appendChild(p);
+            chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to bottom
+          } else {
+            const p = document.createElement('p');
+            p.className = 'message bot-message';
+            p.textContent = 'Unexpected response structure from API';
+            chatDiv.appendChild(p);
+            chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to bottom
+          }
+
+          // Hide loading animation after summary is displayed
+          document.getElementById('loading').style.display = 'none';
+
+          // Show the question input and ask button after uploading document
+          document.getElementById('input-container').style.display = 'flex';
+        }).catch(error => {
+          console.error('Error:', error);
+
+          // Hide loading animation in case of error
+          document.getElementById('loading').style.display = 'none';
+        });
+    }
+
+    function displaySummary() {
+      const chatDiv = document.getElementById('chat');
+      const summaryLines = currentSummary.split('\n');
+      let currentIndex = 0;
+
+      // Disable ask button and change its color to grey
+      const askBtn = document.getElementById('askBtn');
+      askBtn.disabled = false;
+      askBtn.classList.add('disabled');
+
+      isPaused = false;
+
+      document.getElementById('pauseBtn').style.display = 'block'; // Show pause button
+      document.getElementById('regenerateBtn').style.display = 'none'; // Hide regenerate button
+
+      askBtn.addEventListener('click', askQuestion);
+
+
+      function showNextLine() {
+        if (isPaused) return;
+
+        if (currentIndex < summaryLines.length) {
+          const p = document.createElement('p');
+          p.className = 'message bot-message';
+          const line = summaryLines[currentIndex];
+          let charIndex = 0;
+
+          function typeNextCharacter() {
+            if (charIndex < line.length) {
+              p.innerHTML = line.slice(0, charIndex + 1).replace(/\n/g, '<br>');
+              chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to bottom
+              charIndex++;
+              setTimeout(typeNextCharacter, 50); // Adjust delay for typing speed
+            } else {
+              currentIndex++;
+              setTimeout(showNextLine, 500); // Delay before showing the next line
+            }
+          }
+
+          chatDiv.appendChild(p);
+          chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to bottom
+          typeNextCharacter();
+        } else {
+          document.getElementById('pauseBtn').style.display = 'none'; // Hide pause button
+
+          // Re-enable ask button and change its color to green
+          askBtn.disabled = false;
+          askBtn.classList.remove('disabled');
+        }
+      }
+      showNextLine();
+    }
+
+    function handleBotMessage(event) {
+      if (event.data.type === 'message' && event.data.data.text === 'Please upload your file.') {
+        document.getElementById('fileInput').click();
+      }
+    }
+
+    function askQuestion() {
+    const questionInput = document.getElementById('questionInput');
+    const question = questionInput.value.trim();
+    if (!question) {
+        console.log('Question input is empty');
+        return;
+    }
+    console.log('Question:', question); // Debug log
+
+    const chatDiv = document.getElementById('chat');
+    const askBtn = document.getElementById('askBtn');
+    const loadingDiv = document.getElementById('loading');
+
+    // Show loading animation
+    loadingDiv.style.display = 'block';
+
+    // Disable ask button during loading
+    askBtn.disabled = true;
+    askBtn.classList.add('disabled');
+
+    // Display the user's question in the chatbox with typing effect
+    displayTextWithTypingEffect(question, 'user-message')
+        .then(() => {
+            // Introduce a delay before fetching response from the server
+            setTimeout(() => {
+                fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question, context: currentSummary || "" }),
+                }).then(response => response.json())
+                    .then(data => {
+                        console.log('Server response:', data); // Debug log
+
+                        // Display bot's message with typing effect after a delay
+                        setTimeout(() => {
+                            displayTextWithTypingEffect(data.answer || data.error, 'bot-message')
+                                .then(() => {
+                                    // Hide loading animation and re-enable ask button
+                                    loadingDiv.style.display = 'none';
+                                    askBtn.disabled = false;
+                                    askBtn.classList.remove('disabled');
+                                });
+                        }, 1000); // Delay before displaying bot's message
+                    }).catch(error => {
+                        console.error('Error:', error);
+
+                        // Display error message with typing effect
+                        displayTextWithTypingEffect('Error: ' + error.message, 'bot-message')
+                            .then(() => {
+                                // Hide loading animation and re-enable ask button in case of error
+                                loadingDiv.style.display = 'none';
+                                askBtn.disabled = false;
+                                askBtn.classList.remove('disabled');
+                            });
+                    });
+            }, 1000); // Delay before fetching response
+        });
+
+    questionInput.value = '';
+}
+
+async function displayTextWithTypingEffect(text, className) {
+    const chatDiv = document.getElementById('chat');
+    const delay = 50; // Delay between each character
+    const messageElement = document.createElement('p');
+    messageElement.className = 'message ' + className;
+    chatDiv.appendChild(messageElement);
+
+    for (let i = 0; i < text.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, delay)); // Wait for the delay
+        messageElement.textContent += text[i]; // Append each character
+        chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to bottom
+    }
+}
+
+
+    function displayWelcomeMessage() {
+      const chatDiv = document.getElementById('chat');
+      const welcomeMessage = 'Hi, welcome! Please upload a PDF document to summarize.';
+      let currentIndex = 0;
+
+      function showNextCharacter() {
+        if (currentIndex < welcomeMessage.length) {
+          const p = document.createElement('p');
+          p.className = 'message bot-message';
+          p.textContent = welcomeMessage.slice(0, currentIndex + 1);
+          if (chatDiv.lastChild && chatDiv.lastChild.className === 'message bot-message') {
+            chatDiv.removeChild(chatDiv.lastChild);
+          }
+          chatDiv.appendChild(p);
+          chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to bottom
+          currentIndex++;
+          setTimeout(showNextCharacter, 50); // Adjust delay for typing speed
+        }
+      }
+      showNextCharacter();
+    }
+
+    function openFileDialog() {
+      document.getElementById('fileInput').click();
+    }
+
+    function pauseResponse() {
+      isPaused = true;
+      document.getElementById('pauseBtn').style.display = 'none'; // Hide pause button
+      document.getElementById('regenerateBtn').style.display = 'block'; // Show regenerate button
+
+      // Enable ask button and change its color to green
+      const askBtn = document.getElementById('askBtn');
+      askBtn.disabled = false;
+      askBtn.classList.remove('disabled');
+    }
+
+    function regenerateResponse() {
+      currentIndex = 0;
+      document.getElementById('regenerateBtn').style.display = 'none'; // Hide regenerate button
+      displaySummary();
+    }
+
+    window.addEventListener('message', handleBotMessage);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      displayWelcomeMessage();
+
+      const dfMessenger = document.querySelector('df-messenger');
+      dfMessenger.renderCustomText = (text) => {
+        const chatDiv = document.getElementById('chat');
+        const p = document.createElement('p');
+        p.className = 'message bot-message';
+        p.textContent = text;
+        chatDiv.appendChild(p);
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      };
+
+      document.getElementById('uploadBtn').addEventListener('click', () => {
+        console.log('Upload button clicked'); // Debug log
+        openFileDialog(); // Call the openFileDialog function
+      });
+
+      document.getElementById('askBtn').addEventListener('click', askQuestion);
+
+      document.getElementById('questionInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+          askQuestion();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
