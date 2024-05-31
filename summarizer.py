@@ -4,7 +4,7 @@ from flask_cors import CORS
 import anthropic
 from pdfminer.high_level import extract_text
 
-client = anthropic.Client(api_key='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')
+client = anthropic.Client(api_key='#####')
 
 app = Flask(__name__)
 CORS(app)
