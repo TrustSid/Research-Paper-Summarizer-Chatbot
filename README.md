@@ -13,7 +13,7 @@ This project is an interactive chatbot that can summarize uploaded PDF documents
 
 - HTML, CSS, and JavaScript for the front-end interface.
 - Python and Flask for the back-end server.
-- Dialogflow for the chatbot interactions (optional).
+- Google Dialogflow for the chatbot interaction interface.
 
 ## Installation
 
