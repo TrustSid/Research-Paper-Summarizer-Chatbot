@@ -21,6 +21,8 @@ This project is an interactive chatbot that can summarize uploaded PDF documents
 
 - Python 3.x
 - Flask
+- pdfminer
+- Claude Anthropic API key
 
 ### Steps
 
