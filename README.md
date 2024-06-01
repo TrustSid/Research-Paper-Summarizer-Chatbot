@@ -27,6 +27,6 @@ This project is an interactive chatbot that can summarize uploaded PDF documents
 ### Steps
 
 1. Download the zip folder
-2. Install the required Python packages (venv folder contains my virtual env - pyenv that is used to run this project on)
+2. Install the required Python packages (I used a virtual env to install libraries and run the flask application on)
 3. run flask app on local server --> py summarizer.py
 
