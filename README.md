@@ -16,6 +16,7 @@ This project is an interactive chatbot that can summarize large PDF documents (r
 - Google Dialogflow for the chatbot interaction interface.
 
 ## Installation
+- Download and extract chatbot.zip
 
 ### Prerequisites
 
@@ -29,4 +30,8 @@ This project is an interactive chatbot that can summarize large PDF documents (r
 1. Download the .rar folder and extract files
 2. Install the required Python packages (I used a virtual env to install libraries and run the flask application on)
 3. run flask app on local server --> py summarizer.py using CMD
+
+### Add-Ons
+
+- Also contains screen recording video demonstrating implementation of chatbot
 
