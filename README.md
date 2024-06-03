@@ -33,5 +33,5 @@ This project is an interactive chatbot that can summarize large PDF documents (r
 
 ### Add-Ons
 
-- Also contains screen recording video demonstrating implementation of chatbot
+- Contains screen recording video demonstrating implementation of chatbot
 
