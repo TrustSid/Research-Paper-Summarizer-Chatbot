@@ -14,6 +14,7 @@ This project is an interactive chatbot that can summarize large PDF documents (r
 - HTML, CSS, and JavaScript for the front-end interface.
 - Python and Flask for the back-end server.
 - Google Dialogflow for the chatbot interaction interface.
+- Claude Opus Model API 
 
 ## Installation
 - Download and extract chatbot.zip
