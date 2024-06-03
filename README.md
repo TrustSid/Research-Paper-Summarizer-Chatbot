@@ -1,6 +1,6 @@
 # Interactive Chatbot with Document Summarization
 
-This project is an interactive chatbot that can summarize uploaded PDF documents and answer questions related to the summarized content. The chatbot also provides a dynamic and aesthetic text generation experience with a typing effect.
+This project is an interactive chatbot that can summarize large PDF documents (research papers, financial documents, etc) and answer questions related to the summarized content. The chatbot also provides a dynamic and aesthetic text generation experience with a typing effect.
 
 ## Features
 
