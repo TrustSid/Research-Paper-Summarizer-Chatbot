@@ -28,7 +28,7 @@ This project is an interactive chatbot that can summarize large PDF documents (r
 
 ### Steps
 
-1. Download the .rar folder and extract files
+1. Download the .zip folder and extract files
 2. Install the required Python packages (I used a virtual env to install libraries and run the flask application on)
 3. run flask app on local server --> py summarizer.py using CMD
 
